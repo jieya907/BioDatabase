@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+</head>
+
+<style>
+
+.modal-loading {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 )
+    url('https://i.stack.imgur.com/FhHRx.gif')
+    50% 50%
+    no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal-loading {
+    display: block;
+}
+  /*   h1
+{
+    color: #FFFFFF;
+}
+h2
+{
+    color: #FFFFFF;
+}*/
+
+body{
+    background: url('https://i.imgur.com/QwB1pFT.jpg') no-repeat center center fixed;
+    color: #FFFFFF;
+    font-family: Futura, “Trebuchet MS”, Arial, sans-serif;
+    font-size: 16px;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.container
+{
+/*color: #FFFFFF;*/
+font-family: Futura, “Trebuchet MS”, Arial, sans-serif;
+}
+.row
+{
+
+/*color: #FFFFFF;*/
+font-family: Futura, “Trebuchet MS”, Arial, sans-serif;
+}
+form input[type=text]
+{
+    font-family: 'Exo', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    background-color: transparent;
+    color: white;
+}
+form input[type=submit]
+{
+     background-color: transparent;
+     /*color: #FFFFFF;*/
+}
+.parallax {
+  perspective: 1px;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.parallax__layer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.parallax__layer {
+    padding: 100vh 0;
+  }
+.parallax__layer--base {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+.parallax__layer--back {
+    -webkit-transform: translateZ(-1px);
+  transform: translateZ(-1px);
+}
+
+</style>
+
+<script>
+    /* gets the size of the image (file) */
+    var width = 0;
+    var height = 0;
+    $(function() {
+        var _URL = window.URL || window.webkitURL;
+        $("#pic").change(function (e) {
+            var file, img;
+            if ((file = this.files[0])) {
+                img = new Image();
+                img.onload = function () {
+                    width = this.width;
+                    height = this.height;
+                    $('#msg').attr('maxlength', width * height * 3 / 8 - 100);
+                };
+                img.src = _URL.createObjectURL(file);
+            }
+        });
+    });
+    $(function(){
+        $('#url').on('change', function(e){
+            var img = $('<img src="'+$('#url').val()+'"/>').load(function(){
+                width = this.width;
+                height = this.height;
+                $('#msg').attr('maxlength', width * height * 3 / 8 - 100);
+            });
+        });
+    });
+    /* Submits the form for encoding */
+    $(function(){
+        $('#encode').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/encode',
+                type: 'POST',
+                data: new FormData(this),
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                success: function(resp) {
+                    $('#encoding_resp').empty();
+                    if ($('#link').prop('checked')) {
+                        $('#encoding_resp').append($('<a>').attr({'href': resp.link, 'target':'_blank'}).html('Link to image'));
+                    }
+                    if ($('#down_link').prop('checked')) {
+                        var $link = $('<a>', { text: "Download", download: $('#pic').value + ".png",
+                            href: resp.down_link});
+                        $('#encoding_resp').append($link);
+                    }
+                    $('#encoding_resp').append($('<div>').addClass('fb-share-button').
+                            attr('data-href', resp.link).attr('data-layout', 'button_count'));
+                }
+            });
+        });
+    });
+
+    /* Submits the form for decoding */
+    $(function(){
+        $('#decode').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/decode',
+                type: 'POST',
+                data: new FormData(this),
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                success: function(resp) {
+                    if (resp == null){
+                        resp = 'We could not detect a message in this image.'
+                    }
+                    $('#decoding_resp').empty().append($('<p>').html(resp));
+                }
+            });
+        });
+    });
+
+     $(function () {
+                var $body = $("body");
+                $(document).ajaxStart(function () {
+                    console.log("ajax has started");
+                    $body.addClass("loading");
+                });
+                $(document).ajaxStop(function () {
+                    $body.removeClass("loading");
+                });
+
+            });
+
+</script>
+<body>
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+<div class="parallax">
+    <div class="parallax__layer parallax__layer--back">
+        <div style="width:100vw; position:absolute; top:55vh">
+        <h1 style="font-size: 10vh"><center>Welcome to ImageEncode!</center></h1>
+        <h2 style="font-size: 7vh"><center>Your secrets are safe with us.</center></h2>
+        <hr>
+        </div>
+    </div>
+    <div class="parallax__layer parallax__layer--base">
+        <div class="container" style=" background-color:rgba(0,0,0,.8); margin-top: 25vh; border-radius: 10px">
+        <h1><center>Encode messages in your images.</center></h1>
+        <div class="row" style="margin-bottom:1%">
+        <div class="col-sm-12 col-sm-6 col-sm-6" >
+            <div style="width: 60%; margin: 0 auto" id="encoding">
+             <h2>Encode your message</h2>
+
+                <form id='encode' method="POST" action="/encode" role="form" enctype="multipart/form-data">
+                    <div class="form-group">
+                        Choose an image: <div><input type="file" name="pic" class="form-control" id = 'pic'/></div>
+                    </div>
+                    <div class="form-group">
+                        Or enter the URL: <div><input type="text" class="form-control" name="url" id="url"/></div>
+                    </div>
+                    <div class="form-group">
+                        Enter your message: <div><textarea name="msg" class="form-control" id="msg" required></textarea></div>
+                    </div>
+                    <div class="form-group">
+                        Password (optional): <div><input type="text" name="key" class="form-control"/></div><br>
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" name="link" id="link"/> Get link
+                        <input type="checkbox" name="down_link" id="down_link"/> Download image <br>
+                    </div>
+                    <input type="submit" value="Encode" class="btn btn-info">
+                </form>
+                <div id="encoding_resp"></div>
+                </div>
+        </div>
+        <div class="col-sm-12 col-sm-6 col-sm-6">
+             <div style="width: 60%; margin: 0 auto">
+
+                <h2>Decode a message</h2>
+                    <form id='decode' method="POST" action="/decode" role="form" enctype="multipart/form-data">
+                        <div class="form-group">
+                            Choose an image: <div><input type="file" name="pic" class="form-control"/></div><br>
+                        </div>
+                        <div class="form-group">
+                            Or enter the URL: <div><input type="text" name="url" class="form-control"/></div><br>
+                        </div>
+                        <div class="form-group">
+                            Password (optional): <div><input type="text" name="key" class="form-control"/></div><br>
+                        </div>
+                        <input type="submit" value="Decode" class="btn btn-info">
+                    </form>
+                 <div id="decoding_resp"></div>
+             </div>
+        </div>
+             </div>
+        </div>
+        </div>
+    </div>
+
+<div class="modal-loading"></div>
+
+</body>
+</html>
