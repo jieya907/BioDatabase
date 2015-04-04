@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+</head>
+
+<script>
+    $(function(){
+        $('#encode').on('submit', function(e) {
+            e.preventDefault();
+            $.post('/encode', $('#encode').serialize(), function(data) {
+                $('#encoding').append($('<p>').html("imgur link: " + data.imgur));
+                var $link = $('<a>', { text: "Download Mosaic", download: "Collage.png",
+                    href: data.down_link});
+                $('#encoding').append($link);
+            })
+
+        })
+    });
+</script>
+<body>
+	<div class="jumbotron">
+		<h1>Welcome to PhotoEncrypt! Hide any message in any image.</h1>
+	</div>
+
+  	<div class="container">
+  		<h1>Make a PhotoEncrypt!</h1>
+  	<div class="row">
+    <div class="col" style="background-color:lavender;" id="encoding">
+				<form id='encode' method="POST" action="/encode" role="form" enctype="multipart/form-data">
+					Choose an image from your file: <div><input type="file" name="pic" required/></div><br>
+					Enter Your Message: <div><input type="text" name="msg" required/></div><br>
+                    Upload to Imgur?: <div><input type="checkbox" name="imgur"/></div><br>
+					<input type="submit" value="encode">
+				</form>
+    </div>
+    <div class="col" style="background-color:lavenderblush;">
+				<h2>Decode your Image</h2>
+					<form method="POST">
+						Choose an image from your file: <div><input type="file" name="pic"/></div><br>
+						<input type="submit" value="decode">
+                    </form>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
