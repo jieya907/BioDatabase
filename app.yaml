@@ -6,7 +6,8 @@ threadsafe: true
 
 handlers:
 - url: /.*
-  script: imageencrypt.application
+  script: imageencode.application
+  secure: always
 
 
 libraries:

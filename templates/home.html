@@ -4,24 +4,98 @@
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 </head>
 
+<style>
+.modal-loading {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 )
+    url('https://i.stack.imgur.com/FhHRx.gif')
+    50% 50%
+    no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal-loading {
+    display: block;
+}
+</style>
+
 <script>
+    /* Submits the form for encoding */
     $(function(){
         $('#encode').on('submit', function(e) {
             e.preventDefault();
-            $.post('/encode', $('#encode').serialize(), function(data) {
-                $('#encoding').append($('<p>').html("imgur link: " + data.imgur));
-                var $link = $('<a>', { text: "Download Mosaic", download: "Collage.png",
-                    href: data.down_link});
-                $('#encoding').append($link);
-            })
-
-        })
+            $.ajax({
+                url: '/encode',
+                type: 'POST',
+                data: new FormData(this),
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                success: function(resp) {
+                    if ($('#link').prop('checked')) {
+                        $('#encoding').append($('<a>').attr({'href': resp.link}).html('Link to image'));
+                    }
+                    if ($('#down_link').prop('checked')) {
+                        var $link = $('<a>', { text: "Download", download: $('#pic').value + ".png",
+                            href: resp.down_link});
+                        $('#encoding').append($link);
+                    }
+                }
+            });
+        });
     });
+
+    /* Submits the form for decoding */
+    $(function(){
+        $('#decode').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/decode',
+                type: 'POST',
+                data: new FormData(this),
+                dataType: 'json',
+                processData: false,
+                contentType: false,
+                success: function(resp) {
+                    if (resp == null){
+                        resp = 'We could not detect a message in this image.'
+                    }
+                    $('#decoding').append($('<p>').html(resp));
+                }
+            });
+        });
+    });
+
+     $(function () {
+                var $body = $("body");
+                $(document).ajaxStart(function () {
+                    console.log("ajax has started");
+                    $body.addClass("loading");
+                });
+                $(document).ajaxStop(function () {
+                    $body.removeClass("loading");
+                });
+
+            });
+
 </script>
 <body>
 	<div class="jumbotron">
@@ -33,21 +107,27 @@
   	<div class="row">
     <div class="col" style="background-color:lavender;" id="encoding">
 				<form id='encode' method="POST" action="/encode" role="form" enctype="multipart/form-data">
-					Choose an image from your file: <div><input type="file" name="pic" required/></div><br>
+					Choose an image from your file: <div><input type="file" name="pic" id = 'pic' required/></div><br>
 					Enter Your Message: <div><input type="text" name="msg" required/></div><br>
-                    Upload to Imgur?: <div><input type="checkbox" name="imgur"/></div><br>
+                    Get link?: <div><input type="checkbox" name="link" id="link"/></div><br>
+                    Download image?: <div><input type="checkbox" name="down_link" id="down_link"/></div><br>
+
 					<input type="submit" value="encode">
 				</form>
     </div>
-    <div class="col" style="background-color:lavenderblush;">
+    <div class="col" style="background-color:lavenderblush;" id="decoding">
 				<h2>Decode your Image</h2>
-					<form method="POST">
-						Choose an image from your file: <div><input type="file" name="pic"/></div><br>
+					<form id='decode' method="POST" action="/decode" role="form" enctype="multipart/form-data">
+						Choose an image: <div><input type="file" name="pic"/></div><br>
+                        Or enter the URL: <div><input type="text" name="url"/></div><br>
+                        Key (optional): <div><input type="text" name="key"/></div><br>
 						<input type="submit" value="decode">
                     </form>
     </div>
   </div>
 </div>
+
+<div class="modal-loading"></div>
 
 </body>
 </html>
